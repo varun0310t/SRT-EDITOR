@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-
+import { registerUser } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -13,74 +13,24 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
+import { useMutation } from "@tanstack/react-query"
 import { LabelCheckBox } from "@/components/CustomCheckbox"
-
+import { UserDoc } from "@/types/ModelTypes"
 import { ThemeModeToggle } from "@/components/ThemeModeToggle";
-type CardProps = React.ComponentProps<typeof Card>
-
-const RegisterPage: React.FC<CardProps> = ({ className, ...props }: CardProps) => {
-
-    type Registerinformation = {
-        Name: String,
-        Email: String,
-        Password: String,
-        Username: String
-    }
-
-    const [RegisterInfo, setRegisterInfo] = React.useState<Registerinformation>({ Name: "", Email: "", Password: "", Username: "" });
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log(RegisterInfo)
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setRegisterInfo({
-            ...RegisterInfo,
-            [e.target.id]: e.target.value
-        })
+import { on } from "events"
+import RegisterForm from "@/components/RegisterForm"
+import OTPForm from "@/components/otpForm"
 
 
-    }
+const RegisterPage: React.FC<any> = ({ className, ...props }) => {
+
+    const [register, SetRegister] = React.useState<boolean>(false);
+
+
 
     return (<> <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-[350px]">
-
-            <CardHeader>
-                <CardTitle>Register</CardTitle>
-
-            </CardHeader>
-            <CardContent>
-                <form>
-                    <div className="grid w-full items-center gap-4">
-                        <div className="flex flex-col space-y-1.5">
-                            <Label htmlFor="name">Name</Label>
-                            <Input id="Name" onChange={handleChange} placeholder="Name" />
-                        </div>
-                        <div className="flex flex-col space-y-1.5">
-                            <Label htmlFor="name">username</Label>
-                            <Input id="Username" onChange={handleChange} placeholder="username123" />
-                        </div>
-                        <div className="flex flex-col space-y-1.5">
-                            <Label htmlFor="name">Email</Label>
-                            <Input id="Email" onChange={handleChange} placeholder="example@gmail.com" />
-                        </div>
-
-                        <div className="flex flex-col space-y-1.5">
-                            <Label htmlFor="framework">Password</Label>
-                            <Input id="Password" onChange={handleChange} placeholder="example@gmail.com" />
-                        </div>
-
-                    </div>
-                </form>
-
-            </CardContent>
-
-            <CardFooter className="flex justify-between">
-                <LabelCheckBox LabelContent={"Accept terms and conditions"}></LabelCheckBox> <Button>Register</Button>
-            </CardFooter>
-        </Card >
+        {!register && <RegisterForm SetRegister={SetRegister} />}
+        {register && <OTPForm />}
     </div>
     </>)
 }
