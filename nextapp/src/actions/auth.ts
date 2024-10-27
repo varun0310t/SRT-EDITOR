@@ -3,7 +3,7 @@
 import { auth } from '@/lib/DB/connectDB';
 import { cookies } from 'next/headers';
 import connectDB from '@/lib/DB/connectDB';
-import { UserDoc, SessionDoc,KeyDoc } from '@/types/ModelTypes';
+import { UserDoc, SessionDoc } from '@/types/ModelTypes';
 
 
 interface RegisterUserParams {
