@@ -27,11 +27,12 @@ export default function Page() {
           </div>
         )}
       </div>
-      <div className="flex flex-col w-full">
-        <div className="flex flex-row w-full items-start">
+      <div className="flex flex-col w-full h-screen">
+        <div className="flex flex-row w-full items-start h-4/5">
         <SubtitleEditor />
           {currentFile && <VideoPlayerComponent file={currentFile} />}
         </div>
+        <div></div>
       </div>
       </div>
     </>
