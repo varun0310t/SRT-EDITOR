@@ -16,10 +16,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider style={customStyle}>
-      <AppSidebar  />
-      <main className="w-full">
-        {children}
-      </main>
+      <AppSidebar />
+      <main className="w-full">{children}</main>
     </SidebarProvider>
   );
 }

@@ -1,0 +1,92 @@
+1
+00:00:01,900 --> 00:00:07,560
+ Imagine a student from a remote part of J&K and Ladakh, full of hope, applying for a scholarship
+
+2
+00:00:07,560 --> 00:00:08,560
+ that would change their lives.
+
+3
+00:00:08,560 --> 00:00:13,600
+ Instead of focusing on the studies, they are caught in a frustrating cycle, printing documents,
+
+4
+00:00:13,600 --> 00:00:18,560
+ traveling to verification centers and waiting for approvals that seem to take forever.
+
+5
+00:00:18,560 --> 00:00:24,240
+ The process is slow, confusing and full of paperwork, often leading to delays that leave
+
+6
+00:00:24,240 --> 00:00:25,240
+ students in a limbo.
+
+7
+00:00:25,240 --> 00:00:28,520
+ But it's not just the students facing the challenges.
+
+8
+00:00:28,520 --> 00:00:33,280
+ On the other side, the FC center is overwhelmed with the task of manually verifying thousands
+
+9
+00:00:33,280 --> 00:00:35,280
+ of documents from the applicants.
+
+10
+00:00:51,280 --> 00:00:55,720
+ Imagine an alternative, a system where students can apply for their scholarships from the
+
+11
+00:00:55,720 --> 00:00:56,720
+ home.
+
+12
+00:00:56,920 --> 00:01:01,240
+ The workflow documents digitally and track their application status in real time.
+
+13
+00:01:01,240 --> 00:01:03,240
+ No paperwork, no long wait times.
+
+14
+00:01:12,240 --> 00:01:17,880
+ The SHE Bureau, too benefit from the automated verification and streamlined workflows enabling
+
+15
+00:01:17,880 --> 00:01:22,360
+ them to review applications faster and with greater accuracy.
+
+16
+00:01:22,800 --> 00:01:27,480
+ This is exactly what we, Team CODENITI, aim to achieve with our paperless scholarship
+
+17
+00:01:27,480 --> 00:01:30,480
+ disbursement system for the Prime Minister's special scholarships scheme.
+
+18
+00:01:35,480 --> 00:01:40,280
+ I'm Jheel Jain and along with my team we have built a system that eliminates the need
+
+19
+00:01:40,280 --> 00:01:46,280
+ for manual verification by leveraging technologies like optical character recognition and DigiLocker for
+
+20
+00:01:46,280 --> 00:01:49,000
+ secure document authentication.
+
+21
+00:01:49,640 --> 00:01:53,640
+ Students can upload the documents directly while the SHE Bureau can automate verification
+
+22
+00:01:53,640 --> 00:01:59,640
+ and focus on critical cases by reducing manual steps via ensuring faster, more transparent
+
+23
+00:01:59,640 --> 00:02:01,640
+ and reliable scholarship disbursement.
+

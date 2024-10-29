@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa"; // Import the cross icon
 import { srtToAST } from "./srtAstParser";
-import{ loadAstFile } from "./srtAstParser";
-interface Subtitle {
-  start: string;
-  end: string;
-  text: string;
-}
+import { loadAstFile } from "./srtAstParser";
+import { Subtitle } from "./types";
 
-const SubtitleEditor: React.FC = () => {
-  const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
+interface SubtitleEditorProps {
+  subtitles: Subtitle[];
+  setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
+}
+const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
+  subtitles,
+  setSubtitles,
+}) => {
   const [tempValues, setTempValues] = useState<{ [key: string]: string }>({});
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
       const fileContent = await file.text();
@@ -25,18 +29,25 @@ const SubtitleEditor: React.FC = () => {
         const parsedSubtitles = loadAstFile(fileContent);
         setSubtitles(parsedSubtitles);
       } else {
-        console.error("Unsupported file format. Please upload an .srt or .ast file.");
+        console.error(
+          "Unsupported file format. Please upload an .srt or .ast file."
+        );
       }
     }
   };
 
   const updateSubtitle = (index: number, field: string, value: string) => {
+    if(value === "") {
+      return
+    }
     if (field === "start" || field === "end") {
       for (let i = 0; i < subtitles.length; i++) {
         if (i !== index) {
           const subtitle = subtitles[i];
           if (
-            (field === "start" && subtitle.start < value && subtitle.end > value) ||
+            (field === "start" &&
+              subtitle.start < value &&
+              subtitle.end > value) ||
             (field === "end" && subtitle.start < value && subtitle.end > value)
           ) {
             alert(`Time overlaps with subtitle ${i + 1}`);
@@ -65,7 +76,11 @@ const SubtitleEditor: React.FC = () => {
     }));
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, field: string) => {
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number,
+    field: string
+  ) => {
     if (event.key === "Enter") {
       updateSubtitle(index, field, tempValues[`${index}-${field}`] || "");
     }
@@ -84,7 +99,10 @@ const SubtitleEditor: React.FC = () => {
       <h3 className="mb-4">Subtitle Editor (Supports .srt and .ast files)</h3>
 
       <div>
-        <label htmlFor="file-upload" className="cursor-pointer p-2 bg-blue-600 rounded">
+        <label
+          htmlFor="file-upload"
+          className="cursor-pointer p-2 bg-blue-600 rounded"
+        >
           Upload SRT or AST File
         </label>
         <input
@@ -99,12 +117,17 @@ const SubtitleEditor: React.FC = () => {
       {subtitles.length > 0 && (
         <div className="mt-4">
           {subtitles.map((subtitle, index) => (
-            <div key={index} className="relative flex items-start space-x-2 mb-2 group">
+            <div
+              key={index}
+              className="relative flex items-start space-x-2 mb-2 group"
+            >
               <div className="flex flex-col w-20 h-full justify-center">
                 <input
                   type="text"
                   value={tempValues[`${index}-start`] || subtitle.start}
-                  onChange={(e) => handleInputChange(index, "start", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "start", e.target.value)
+                  }
                   onKeyDown={(e) => handleKeyDown(e, index, "start")}
                   onBlur={() => handleBlur(index, "start")}
                   className="w-20 p-1 bg-transparent focus:bg-neutral-700 rounded text-xs"
@@ -113,7 +136,9 @@ const SubtitleEditor: React.FC = () => {
                 <input
                   type="text"
                   value={tempValues[`${index}-end`] || subtitle.end}
-                  onChange={(e) => handleInputChange(index, "end", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange(index, "end", e.target.value)
+                  }
                   onKeyDown={(e) => handleKeyDown(e, index, "end")}
                   onBlur={() => handleBlur(index, "end")}
                   className="w-20 p-1 bg-transparent focus:bg-neutral-700 rounded text-xs"
@@ -122,7 +147,9 @@ const SubtitleEditor: React.FC = () => {
               </div>
               <textarea
                 value={tempValues[`${index}-text`] || subtitle.text}
-                onChange={(e) => handleInputChange(index, "text", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange(index, "text", e.target.value)
+                }
                 onKeyDown={(e) => handleKeyDown(e, index, "text")}
                 onBlur={() => handleBlur(index, "text")}
                 className="flex-grow p-2 bg-neutral-700 rounded text-center text-lg h-full resize-none"
@@ -136,7 +163,10 @@ const SubtitleEditor: React.FC = () => {
           ))}
           <button
             onClick={() =>
-              setSubtitles([...subtitles, { start: "00:00:00,000", end: "00:00:05,000", text: "" }])
+              setSubtitles([
+                ...subtitles,
+                { start: "00:00:00,000", end: "00:00:05,000", text: "" },
+              ])
             }
             className="mt-4 p-2 bg-green-600 rounded text-xs"
           >

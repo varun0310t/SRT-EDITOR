@@ -4,10 +4,12 @@ import { Subtitle } from "./types";
 export const srtToAST = (srtContent: string): Subtitle[] => {
   const lines = srtContent.split("\n");
   const ast: Subtitle[] = [];
-  let subtitle: Subtitle = { start: "", end: "", text: "" };
+  let subtitle: Subtitle = { start: "", end: "", text: "" ,x:50,y:50 };
 
   lines.forEach((line) => {
     const timeRegex = /(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/;
+    subtitle.x = 550;
+    subtitle.y = 1750;
     if (line.match(timeRegex)) {
       const [_, start, end] = line.match(timeRegex)!;
       subtitle.start = start;
