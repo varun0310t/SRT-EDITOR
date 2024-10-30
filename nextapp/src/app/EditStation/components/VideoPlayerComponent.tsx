@@ -23,12 +23,16 @@ interface VideoPlayerProps {
   file: File;
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
+  onTimeUpdate?: (time: number) => void;
+  onDurationChange?: (duration: number) => void;
 }
 
 const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   file,
   subtitles,
   setSubtitles,
+  onTimeUpdate,
+  onDurationChange,
 }) => {
   const playerRef = useRef<ReactPlayer>(null);
   const videoUrl = useMemo(() => URL.createObjectURL(file), [file]);
@@ -65,10 +69,12 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 
   const handleProgress = useCallback((state: { playedSeconds: number }) => {
     setPlayedSeconds(state.playedSeconds);
-  }, []);
+    onTimeUpdate?.(state.playedSeconds);
+  }, [onTimeUpdate]);
 
   const handleDuration = (duration: number) => {
     setDuration(duration);
+    onDurationChange?.(duration);
   };
 
   const handlePlaybackChange = (value: number) => {
@@ -296,7 +302,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       </div>
 
       <div className="flex items-center justify-between  space-x-4 mt-4 w-full px-2">
-        <div className="flex flex-row">
+        <div className="flex">
           <Button variant={buttontype} onClick={handlebuttonpress}>
             Move
           </Button>

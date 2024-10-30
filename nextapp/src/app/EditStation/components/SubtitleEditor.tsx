@@ -36,29 +36,45 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
     }
   };
 
+  const parseTime = (time: string): number => {
+    const [hours, minutes, seconds] = time.split(":");
+    const [secs, millis] = seconds.split(",");
+    return (
+      parseInt(hours) * 3600 +
+      parseInt(minutes) * 60 +
+      parseInt(secs) +
+      parseInt(millis) / 1000
+    );
+  };
+
+  const checkOverlap = (index: number, start: string, end: string): boolean => {
+    const startTime = parseTime(start);
+    const endTime = parseTime(end);
+    
+    return subtitles.some((sub, i) => {
+      if (i === index) return false;
+      const subStart = parseTime(sub.start);
+      const subEnd = parseTime(sub.end);
+      return (startTime < subEnd && endTime > subStart);
+    });
+  };
+
   const updateSubtitle = (index: number, field: string, value: string) => {
-    if(value === "") {
-      return
-    }
+    if(value === "") return;
+
     if (field === "start" || field === "end") {
-      for (let i = 0; i < subtitles.length; i++) {
-        if (i !== index) {
-          const subtitle = subtitles[i];
-          if (
-            (field === "start" &&
-              subtitle.start < value &&
-              subtitle.end > value) ||
-            (field === "end" && subtitle.start < value && subtitle.end > value)
-          ) {
-            alert(`Time overlaps with subtitle ${i + 1}`);
-            // Revert to original value
-            setTempValues((prevTempValues) => ({
-              ...prevTempValues,
-              [`${index}-${field}`]: subtitles[index][field],
-            }));
-            return;
-          }
-        }
+      const subtitle = subtitles[index];
+      const newStart = field === "start" ? value : subtitle.start;
+      const newEnd = field === "end" ? value : subtitle.end;
+
+      if (checkOverlap(index, newStart, newEnd)) {
+        alert(`Time overlaps with another subtitle`);
+        // Revert to original value
+        setTempValues((prevTempValues) => ({
+          ...prevTempValues,
+          [`${index}-${field}`]: subtitle[field],
+        }));
+        return;
       }
     }
 
