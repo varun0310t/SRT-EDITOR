@@ -7,9 +7,11 @@ interface TimelineProps {
   subtitles: Subtitle[];
   onSeek: (time: number) => void;
   onSubtitleChange: (index: number, newStart: string, newEnd: string) => void;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ duration, playedSeconds, subtitles, onSeek, onSubtitleChange }) => {
+const Timeline: React.FC<TimelineProps> = ({ duration, playedSeconds, subtitles, onSeek, onSubtitleChange, isPlaying, setIsPlaying }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const SCALE = 100; // pixels per second
@@ -109,34 +111,91 @@ const Timeline: React.FC<TimelineProps> = ({ duration, playedSeconds, subtitles,
     }
   }, [dragging]);
 
-  // Add this effect to handle scrolling
-  useEffect(() => {
-    if (containerRef.current) {
-      const scrollPosition = playedSeconds * SCALE - (containerRef.current.clientWidth / 2);
-      containerRef.current.scrollLeft = scrollPosition;
-    }
-  }, [playedSeconds, SCALE]);
+  const lastManualSeekTime = useRef<number>(0);
+  const SEEK_THRESHOLD = 150; // ms
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (!timelineRef.current || !containerRef.current) return;
-    const rect = timelineRef.current.getBoundingClientRect();
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left + containerRef.current.scrollLeft;
-    onSeek(clickX / SCALE);
+  // Modify the scroll handler to update video position only when manually scrolling
+  const handleTimelineScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    
+    // Only update if the scroll was triggered by user interaction (wheel or drag)
+    if (e.type === 'scroll' && !isPlaying) {
+      const now = Date.now();
+      if (now - lastManualSeekTime.current < SEEK_THRESHOLD) return;
+      
+      lastManualSeekTime.current = now;
+      const centerX = containerRef.current.scrollLeft + containerRef.current.clientWidth / 2;
+      const newTime = centerX / SCALE;
+      
+      if (Math.abs(newTime - playedSeconds) > 0.1) {
+        onSeek(newTime);
+      }
+    }
   };
 
+  // Modify the wheel handler to handle zooming or horizontal scrolling
+  const handleTimelineWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!containerRef.current) return;
+    
+    const scrollAmount = e.deltaY;
+    containerRef.current.scrollLeft += scrollAmount;
+    
+    if (!isPlaying) {
+     
+      const now = Date.now();
+      if (now - lastManualSeekTime.current < SEEK_THRESHOLD) return;
+      
+      lastManualSeekTime.current = now;
+      const centerX = containerRef.current.scrollLeft + containerRef.current.clientWidth / 2;
+      const newTime = centerX / SCALE;
+      
+      if (Math.abs(newTime - playedSeconds) > 0.1) {
+        onSeek(newTime);
+      }
+    }
+  };
+
+  // This effect will keep the timeline centered on the current playback position
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Calculate the scroll position to center the playhead
+    const scrollPosition = playedSeconds * SCALE - (containerRef.current.clientWidth / 2);
+    containerRef.current.scrollLeft = scrollPosition;
+  }, [playedSeconds, SCALE]);
+
+  function handleClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (!timelineRef.current) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickTime = clickX / SCALE;
+    setIsPlaying(false);
+    onSeek(clickTime);
+  }
+
   return (
-    <div className="w-full h-32 bg-neutral-900 rounded-lg shadow-lg p-4">
-      {/* Container with centered playhead */}
+    <div 
+      className="w-full h-32 bg-neutral-900 rounded-lg shadow-lg p-4"
+      onWheel={handleTimelineWheel}
+    >
       <div className="relative">
-        {/* Fixed centered playhead */}
-        <div className="absolute left-1/2 top-0 w-0.5 h-32 bg-red-500 z-20 -translate-x-1/2" />
+        {/* Fixed centered playhead with time display */}
+        <div className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+          <div className="text-xs text-white mb-1">
+            {new Date(playedSeconds * 1000).toISOString().substr(11, 8)}
+          </div>
+          <div className="w-0.5 h-32 bg-red-500" />
+        </div>
         
         {/* Scrollable container */}
         <div 
           ref={containerRef}
-          className="overflow-x-auto relative"
+          className="overflow-x-auto relative scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent"
           style={{ height: '8rem' }}
+          onScroll={handleTimelineScroll}
         >
           <div 
             className="relative h-full" 

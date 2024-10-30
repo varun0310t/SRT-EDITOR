@@ -3,7 +3,8 @@ import { FaTimes } from "react-icons/fa"; // Import the cross icon
 import { srtToAST } from "./srtAstParser";
 import { loadAstFile } from "./srtAstParser";
 import { Subtitle } from "./types";
-
+import { AiOutlineSplitCells } from "react-icons/ai";
+import { CgArrowsMergeAltV } from "react-icons/cg";
 interface SubtitleEditorProps {
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
@@ -46,21 +47,92 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
       parseInt(millis) / 1000
     );
   };
+  const formatTime = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${s.toString().padStart(2, "0")},${ms
+      .toString()
+      .padStart(3, "0")}`;
+  };
 
   const checkOverlap = (index: number, start: string, end: string): boolean => {
     const startTime = parseTime(start);
     const endTime = parseTime(end);
-    
+
     return subtitles.some((sub, i) => {
       if (i === index) return false;
       const subStart = parseTime(sub.start);
       const subEnd = parseTime(sub.end);
-      return (startTime < subEnd && endTime > subStart);
+      return startTime < subEnd && endTime > subStart;
     });
   };
-
+  const splitSubtitle = (index: number) => {
+    setSubtitles((prevSubtitles) => {
+      const subtitle = prevSubtitles[index];
+      const startTime = parseTime(subtitle.start);
+      const endTime = parseTime(subtitle.end);
+      const splitTime = (startTime + endTime) / 2;
+  
+      // Create the first half subtitle - keep x, y coordinates if they exist
+      const splitedSubtitle = {
+        ...subtitle, // Keep all original properties including x, y
+        start: formatTime(startTime),
+        end: formatTime(splitTime),
+        text: subtitle.text,
+      };
+  
+      // Create the second half subtitle - keep x, y coordinates if they exist
+      const updatedSubtitle = {
+        ...subtitle, // Keep all original properties including x, y
+        start: formatTime(splitTime),
+        end: formatTime(endTime),
+        text: "", // Empty text for the second half
+      };
+  
+      // Create new array with both parts
+      const newSubtitles = [
+        ...prevSubtitles.slice(0, index),
+        splitedSubtitle,
+        updatedSubtitle,
+        ...prevSubtitles.slice(index + 1),
+      ];
+  
+      return newSubtitles;
+    });
+  };
+  
+  const mergeSubtitle = (index: number) => {
+    setSubtitles((prevSubtitles) => {
+      // Check if there's a next subtitle to merge with
+      if (index >= prevSubtitles.length - 1) return prevSubtitles;
+  
+      const firstSubtitle = prevSubtitles[index];
+      const secondSubtitle = prevSubtitles[index + 1];
+  
+      // Create a new merged subtitle object
+      const mergedSubtitle = {
+        ...firstSubtitle,
+        end: secondSubtitle.end,
+        text: firstSubtitle.text + " " + secondSubtitle.text,
+      };
+  
+      // Create new array with the merged subtitle
+      const newSubtitles = [
+        ...prevSubtitles.slice(0, index),
+        mergedSubtitle,
+        ...prevSubtitles.slice(index + 2),
+      ];
+  
+      return newSubtitles;
+    });
+  };
+  
   const updateSubtitle = (index: number, field: string, value: string) => {
-    if(value === "") return;
+    if (value === "") return;
 
     if (field === "start" || field === "end") {
       const subtitle = subtitles[index];
@@ -134,7 +206,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         <div className="mt-4">
           {subtitles.map((subtitle, index) => (
             <div
-              key={index}
+              key={`subtitle-${index}`}
               className="relative flex items-start space-x-2 mb-2 group"
             >
               <div className="flex flex-col w-20 h-full justify-center">
@@ -173,7 +245,20 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
               />
               <FaTimes
                 onClick={() => removeSubtitle(index)}
-                className="absolute w-6 h-6 top-[-3px] right-[-10px] transform -translate-y-1/2 p-1 text-red-600 cursor-pointer opacity-0 group-hover:opacity-100"
+                className="absolute w-6 h-6 top-[-3px] right-[-10px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
+              />
+              <AiOutlineSplitCells
+                onClick={() => {
+                  splitSubtitle(index);
+                }}
+                className="absolute w-7 h-7 bottom-[-25px] right-[20px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
+              />
+              <CgArrowsMergeAltV
+                onClick={() => {
+                  console.log("merge");
+                  mergeSubtitle(index);
+                }}
+                className="absolute w-7 h-7 bottom-[-25px] right-[50px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
               />
             </div>
           ))}

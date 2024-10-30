@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useEffect,
   use,
+  forwardRef,
 } from "react";
 import ReactPlayer from "react-player";
 import { FaPlay, FaPause } from "react-icons/fa";
@@ -25,22 +26,27 @@ interface VideoPlayerProps {
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
   onTimeUpdate?: (time: number) => void;
   onDurationChange?: (duration: number) => void;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  playerRef: React.RefObject<ReactPlayer>; // Add this prop
 }
 
-const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
+const VideoPlayerComponent = forwardRef<ReactPlayer, VideoPlayerProps>(({
   file,
   subtitles,
   setSubtitles,
   onTimeUpdate,
   onDurationChange,
-}) => {
-  const playerRef = useRef<ReactPlayer>(null);
+  isPlaying,
+  setIsPlaying,
+  playerRef  // Use the ref from props instead
+}, _ref) => {  // We can ignore the forwarded ref since we're using the prop ref
+
   const videoUrl = useMemo(() => URL.createObjectURL(file), [file]);
   const [volume, setVolume] = useState(0.8);
   const [currentSubtitle, setCurrentSubtitle] = useState<Subtitle | null>(null);
   const [playedSeconds, setPlayedSeconds] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null);
   const [px, setpx] = useState<number>(100);
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState<number>(0);
@@ -52,15 +58,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const isButtonPressedRef = useRef<boolean>(false);
   const pxref = useRef<number>(100);
   const handlePlay = () => {
-    setPlaying(true);
+    setIsPlaying(true);
   };
 
   const handlePause = () => {
-    setPlaying(false);
+    setIsPlaying(false);
   };
 
   const handleSeek = (seconds: number) => {
-    playerRef.current?.seekTo(seconds);
+    playerRef?.current?.seekTo(seconds);
   };
 
   const handleVolumeChange = (value: number) => {
@@ -289,12 +295,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     <div className="w-full h-full max-w-4xl max-h-[80vh] mx-auto p-4 bg-neutral-900 rounded-lg shadow-lg flex flex-col items-center">
       <div className="w-full h-full relative rounded overflow-hidden">
         <ReactPlayer
-          ref={playerRef}
+          ref={playerRef}  // Use the ref from props
           url={videoUrl}
-          playing={playing}
+          playing={isPlaying}
           volume={volume}
           width="100%"
           height="100%"
+          progressInterval={33}  // Updates about 60 times per second (1000ms / 60fps ≈ 16.6ms)
           onProgress={handleProgress}
           onDuration={handleDuration}
           onError={(e) => console.error("Error loading video:", e)}
@@ -332,10 +339,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
       <div className="flex items-center justify-center space-x-4 mt-4 w-full px-2">
         <button
-          onClick={playing ? handlePause : handlePlay}
+          onClick={isPlaying ? handlePause : handlePlay}
           className="text-white text-2xl hover:text-gray-400"
         >
-          {playing ? <FaPause /> : <FaPlay />}
+          {isPlaying ? <FaPause /> : <FaPlay />}
         </button>
 
         <button
@@ -366,6 +373,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       </div>
     </div>
   );
-};
+});
 
 export default VideoPlayerComponent;
