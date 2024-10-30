@@ -11,6 +11,7 @@ interface TimelineProps {
 
 const Timeline: React.FC<TimelineProps> = ({ duration, playedSeconds, subtitles, onSeek, onSubtitleChange }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const SCALE = 100; // pixels per second
   const [dragging, setDragging] = useState<{
     type: 'move' | 'start' | 'end';
@@ -108,63 +109,86 @@ const Timeline: React.FC<TimelineProps> = ({ duration, playedSeconds, subtitles,
     }
   }, [dragging]);
 
+  // Add this effect to handle scrolling
+  useEffect(() => {
+    if (containerRef.current) {
+      const scrollPosition = playedSeconds * SCALE - (containerRef.current.clientWidth / 2);
+      containerRef.current.scrollLeft = scrollPosition;
+    }
+  }, [playedSeconds, SCALE]);
+
   const handleClick = (e: React.MouseEvent) => {
-    if (!timelineRef.current) return;
+    if (!timelineRef.current || !containerRef.current) return;
     const rect = timelineRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left + containerRef.current.scrollLeft;
     onSeek(clickX / SCALE);
   };
 
   return (
-    <div className="w-full h-32 bg-neutral-900 rounded-lg shadow-lg p-4 overflow-x-auto">
-      <div className="relative h-full" style={{ width: `${duration * SCALE}px` }}>
-        {/* Time markers */}
-        <div className="h-6 border-b border-neutral-700">
-          {Array.from({ length: Math.ceil(duration) }).map((_, i) => (
-            <div key={i} className="absolute h-2 border-l border-neutral-600" style={{ left: `${i * SCALE}px` }}>
-              <span className="absolute top-2 text-xs text-neutral-400 -translate-x-1/2">
-                {`${Math.floor(i / 60)}:${String(i % 60).padStart(2, '0')}`}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Subtitle track */}
-        <div ref={timelineRef} className="relative h-16 mt-2" onClick={handleClick}>
-          {/* Playhead */}
+    <div className="w-full h-32 bg-neutral-900 rounded-lg shadow-lg p-4">
+      {/* Container with centered playhead */}
+      <div className="relative">
+        {/* Fixed centered playhead */}
+        <div className="absolute left-1/2 top-0 w-0.5 h-32 bg-red-500 z-20 -translate-x-1/2" />
+        
+        {/* Scrollable container */}
+        <div 
+          ref={containerRef}
+          className="overflow-x-auto relative"
+          style={{ height: '8rem' }}
+        >
           <div 
-            className="absolute top-0 h-full w-0.5 bg-red-500 z-10"
-            style={{ left: `${playedSeconds * SCALE}px` }}
-          />
+            className="relative h-full" 
+            style={{ width: `${duration * SCALE}px` }}
+          >
+            {/* Time markers */}
+            <div className="h-6 border-b border-neutral-700">
+              {Array.from({ length: Math.ceil(duration) }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className="absolute h-2 border-l border-neutral-600" 
+                  style={{ left: `${i * SCALE}px` }}
+                >
+                  <span className="absolute top-2 text-xs text-neutral-400 -translate-x-1/2">
+                    {`${Math.floor(i / 60)}:${String(i % 60).padStart(2, '0')}`}
+                  </span>
+                </div>
+              ))}
+            </div>
 
-          {/* Subtitle blocks */}
-          {subtitles.map((subtitle, index) => {
-            const startTime = parseTime(subtitle.start);
-            const endTime = parseTime(subtitle.end);
-            const width = (endTime - startTime) * SCALE;
+            {/* Subtitle track */}
+            <div ref={timelineRef} className="relative h-16 mt-2" onClick={handleClick}>
+              {/* Subtitle blocks */}
+              {subtitles.map((subtitle, index) => {
+                const startTime = parseTime(subtitle.start);
+                const endTime = parseTime(subtitle.end);
+                const width = (endTime - startTime) * SCALE;
 
-            return (
-              <div
-                key={index}
-                className="absolute h-8 bg-blue-500 bg-opacity-50 rounded group"
-                style={{
-                  left: `${startTime * SCALE}px`,
-                  width: `${width}px`,
-                }}
-                onMouseDown={(e) => handleMouseDown(e, index, 'move')}
-              >
-                <div
-                  className="absolute left-0 w-2 h-full cursor-w-resize opacity-0 group-hover:opacity-100 bg-white bg-opacity-50"
-                  onMouseDown={(e) => handleMouseDown(e, index, 'start')}
-                />
-                <div
-                  className="absolute right-0 w-2 h-full cursor-e-resize opacity-0 group-hover:opacity-100 bg-white bg-opacity-50"
-                  onMouseDown={(e) => handleMouseDown(e, index, 'end')}
-                />
-                <span className="text-xs truncate px-1">{subtitle.text}</span>
-              </div>
-            );
-          })}
+                return (
+                  <div
+                    key={index}
+                    className="absolute h-8 bg-blue-500 bg-opacity-50 rounded group"
+                    style={{
+                      left: `${startTime * SCALE}px`,
+                      width: `${width}px`,
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e, index, 'move')}
+                  >
+                    <div
+                      className="absolute left-0 w-2 h-full cursor-w-resize opacity-0 group-hover:opacity-100 bg-white bg-opacity-50"
+                      onMouseDown={(e) => handleMouseDown(e, index, 'start')}
+                    />
+                    <div
+                      className="absolute right-0 w-2 h-full cursor-e-resize opacity-0 group-hover:opacity-100 bg-white bg-opacity-50"
+                      onMouseDown={(e) => handleMouseDown(e, index, 'end')}
+                    />
+                    <span className="text-xs truncate px-1">{subtitle.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
