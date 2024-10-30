@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Add useEffect import
 import { FaTimes } from "react-icons/fa"; // Import the cross icon
 import { srtToAST } from "./srtAstParser";
 import { loadAstFile } from "./srtAstParser";
 import { Subtitle } from "./types";
 import { AiOutlineSplitCells } from "react-icons/ai";
 import { CgArrowsMergeAltV } from "react-icons/cg";
+import { v4 as uuidv4 } from "uuid"; // Import UUID
+
 interface SubtitleEditorProps {
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
@@ -14,6 +16,17 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
   setSubtitles,
 }) => {
   const [tempValues, setTempValues] = useState<{ [key: string]: string }>({});
+
+  // Initialize tempValues when subtitles change
+  useEffect(() => {
+    const newTempValues: { [key: string]: string } = {};
+    subtitles.forEach((subtitle, index) => {
+      newTempValues[`${index}-start`] = subtitle.start;
+      newTempValues[`${index}-end`] = subtitle.end;
+      newTempValues[`${index}-text`] = subtitle.text;
+    });
+    setTempValues(newTempValues);
+  }, [subtitles]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -76,23 +89,25 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
       const startTime = parseTime(subtitle.start);
       const endTime = parseTime(subtitle.end);
       const splitTime = (startTime + endTime) / 2;
-  
+
       // Create the first half subtitle - keep x, y coordinates if they exist
       const splitedSubtitle = {
         ...subtitle, // Keep all original properties including x, y
         start: formatTime(startTime),
         end: formatTime(splitTime),
         text: subtitle.text,
+        id: uuidv4(), // Assign a new unique ID
       };
-  
+
       // Create the second half subtitle - keep x, y coordinates if they exist
       const updatedSubtitle = {
         ...subtitle, // Keep all original properties including x, y
         start: formatTime(splitTime),
         end: formatTime(endTime),
-        text: "", // Empty text for the second half
+        text: " ", // Empty text for the second half
+        id: uuidv4(), // Assign a new unique ID
       };
-  
+
       // Create new array with both parts
       const newSubtitles = [
         ...prevSubtitles.slice(0, index),
@@ -100,37 +115,40 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         updatedSubtitle,
         ...prevSubtitles.slice(index + 1),
       ];
-  
+      console.log(newSubtitles, prevSubtitles);
       return newSubtitles;
     });
+    console.log(subtitles);
   };
-  
+
   const mergeSubtitle = (index: number) => {
     setSubtitles((prevSubtitles) => {
       // Check if there's a next subtitle to merge with
       if (index >= prevSubtitles.length - 1) return prevSubtitles;
-  
+
       const firstSubtitle = prevSubtitles[index];
       const secondSubtitle = prevSubtitles[index + 1];
-  
-      // Create a new merged subtitle object
+
+      // Create a new merged subtitle object with a new unique ID
       const mergedSubtitle = {
         ...firstSubtitle,
         end: secondSubtitle.end,
         text: firstSubtitle.text + " " + secondSubtitle.text,
+        id: uuidv4(), // Assign a new unique ID
       };
-  
+
       // Create new array with the merged subtitle
       const newSubtitles = [
         ...prevSubtitles.slice(0, index),
         mergedSubtitle,
         ...prevSubtitles.slice(index + 2),
       ];
-  
+      
       return newSubtitles;
     });
   };
-  
+
+  // Modify updateSubtitle to clear tempValues after successful update
   const updateSubtitle = (index: number, field: string, value: string) => {
     if (value === "") return;
 
@@ -141,9 +159,9 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
 
       if (checkOverlap(index, newStart, newEnd)) {
         alert(`Time overlaps with another subtitle`);
-        // Revert to original value
-        setTempValues((prevTempValues) => ({
-          ...prevTempValues,
+        // Reset to original value
+        setTempValues((prev) => ({
+          ...prev,
           [`${index}-${field}`]: subtitle[field],
         }));
         return;
@@ -155,6 +173,13 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         i === index ? { ...subtitle, [field]: value } : subtitle
       )
     );
+
+    // Clear temporary value after successful update
+    setTempValues((prev) => {
+      const updated = { ...prev };
+      delete updated[`${index}-${field}`];
+      return updated;
+    });
   };
 
   const handleInputChange = (index: number, field: string, value: string) => {
@@ -182,6 +207,36 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
     setSubtitles(subtitles.filter((_, i) => i !== index));
   };
 
+  const addSubtitle = () => {
+    setSubtitles((prevSubtitles) => [
+      ...prevSubtitles,
+      {
+        id: uuidv4(), // Assign a new unique ID
+        start: "00:00:00,000",
+        end: "00:00:05,000",
+        text: "",
+      },
+    ]);
+  };
+
+  // Add this useEffect to monitor subtitle changes
+  useEffect(() => {
+    console.log('Subtitles updated:', subtitles);
+  }, [subtitles]);
+
+  // Add more detailed logging
+  useEffect(() => {
+    if (subtitles.length > 0) {
+      console.log('Current subtitles:', JSON.stringify(subtitles, null, 2));
+    }
+  }, [subtitles]);
+
+  // Modify input rendering to use tempValues more reliably
+  const renderInput = (index: number, field: string, value: string) => {
+    const tempKey = `${index}-${field}`;
+    return tempValues[tempKey] !== undefined ? tempValues[tempKey] : value;
+  };
+
   return (
     <div className="p-4 w-full h-full overflow-auto bg-neutral-800 rounded-lg shadow-lg text-white">
       <h3 className="mb-4">Subtitle Editor (Supports .srt and .ast files)</h3>
@@ -202,17 +257,18 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         />
       </div>
 
-      {subtitles.length > 0 && (
+      {Array.isArray(subtitles) && subtitles.length > 0 && (
         <div className="mt-4">
+          {/* Remove the extra '&&' and ensure we're mapping the current state */}
           {subtitles.map((subtitle, index) => (
             <div
-              key={`subtitle-${index}`}
+              key={subtitle.id || index} // Use subtitle.id as the key
               className="relative flex items-start space-x-2 mb-2 group"
             >
               <div className="flex flex-col w-20 h-full justify-center">
                 <input
                   type="text"
-                  value={tempValues[`${index}-start`] || subtitle.start}
+                  value={renderInput(index, "start", subtitle.start)}
                   onChange={(e) =>
                     handleInputChange(index, "start", e.target.value)
                   }
@@ -263,12 +319,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
             </div>
           ))}
           <button
-            onClick={() =>
-              setSubtitles([
-                ...subtitles,
-                { start: "00:00:00,000", end: "00:00:05,000", text: "" },
-              ])
-            }
+            onClick={addSubtitle}
             className="mt-4 p-2 bg-green-600 rounded text-xs"
           >
             Add Subtitle
