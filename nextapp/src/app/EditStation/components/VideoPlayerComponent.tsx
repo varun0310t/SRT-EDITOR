@@ -12,7 +12,8 @@ import { MdOutlineForward5 } from "react-icons/md"; // Import the forward icon
 import { Slider } from "@/components/ui/slider";
 import { Subtitle } from "./types";
 import Draggable from "react-draggable"; // Import Draggable
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { set } from "mongoose";
 
 // Import SubtitleOctopus as any type
 const SubtitleOctopus: any = require("@/../JavascriptSubtitlesOctopus/dist/js/subtitles-octopus");
@@ -31,12 +32,17 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const playerRef = useRef<ReactPlayer>(null);
   const videoUrl = useMemo(() => URL.createObjectURL(file), [file]);
   const [volume, setVolume] = useState(0.8);
+  const [currentSubtitle, setCurrentSubtitle] = useState<Subtitle | null>(null);
   const [playedSeconds, setPlayedSeconds] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null);
   const [px, setpx] = useState<number>(10);
+  const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState<number>(0);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
+  const [buttontype, setbuttontype] = useState<"default" | "destructive">(
+    "default"
+  );
   const handlePlay = () => {
     setPlaying(true);
   };
@@ -157,14 +163,43 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       }
     }
   }, [subtitleUrl]);
+  //convert String to time in seconds
+  const parseTime = (time: string): number => {
+    const [hours, minutes, seconds] = time.split(":");
+    const [secs, millis] = seconds.split(",");
+    return (
+      parseInt(hours, 10) * 3600 +
+      parseInt(minutes, 10) * 60 +
+      parseInt(secs, 10) +
+      parseInt(millis, 10) / 1000
+    );
+  };
+
+  useEffect(() => {
+    if (
+      currentSubtitle &&
+      parseTime(currentSubtitle.start) < playedSeconds &&
+      parseTime(currentSubtitle.end) >= playedSeconds
+    ) {
+      // current sbutilte has not changed
+    } else {
+      const newSubtitle = subtitles.find(
+        (subtitle) =>
+          parseTime(subtitle.start) < playedSeconds &&
+          parseTime(subtitle.end) >= playedSeconds
+      );
+      console.log("newSubtitle", newSubtitle);
+      setCurrentSubtitle(newSubtitle || null);
+    }
+  }, [playedSeconds]);
+
   const handlebuttonpress = (e: any) => {
     e.preventDefault();
     setIsButtonPressed(!isButtonPressed);
     if (isButtonPressed) {
-      e.target.className = "bg-red-500";
+      setbuttontype("default");
     } else {
-      e.target.className =
-        "bg-primary text-primary-foreground shadow hover:bg-primary/90";
+      setbuttontype("destructive");
     }
   };
   return (
@@ -184,7 +219,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       </div>
 
       <div className="flex items-center justify-between  space-x-4 mt-4 w-full px-2">
-        <Button onClick={handlebuttonpress}>Move px({px})</Button>
+        <Button variant={buttontype} onClick={handlebuttonpress}>
+          Move px({px})
+        </Button>
       </div>
 
       {/* Playback Slider */}
