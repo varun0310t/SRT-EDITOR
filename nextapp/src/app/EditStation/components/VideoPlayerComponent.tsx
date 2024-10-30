@@ -14,6 +14,7 @@ import { Subtitle } from "./types";
 import Draggable from "react-draggable"; // Import Draggable
 import { Button, buttonVariants } from "@/components/ui/button";
 import { set } from "mongoose";
+import { Input } from "@/components/ui/input";
 
 // Import SubtitleOctopus as any type
 const SubtitleOctopus: any = require("@/../JavascriptSubtitlesOctopus/dist/js/subtitles-octopus");
@@ -37,12 +38,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [subtitleUrl, setSubtitleUrl] = useState<string | null>(null);
-  const [px, setpx] = useState<number>(10);
+  const [px, setpx] = useState<number>(100);
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState<number>(0);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const [buttontype, setbuttontype] = useState<"default" | "destructive">(
     "default"
   );
+  const currentSubtitleIndexRef = useRef<number>(-1);
+  const isButtonPressedRef = useRef<boolean>(false);
+  const pxref = useRef<number>(100);
   const handlePlay = () => {
     setPlaying(true);
   };
@@ -181,27 +185,100 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       parseTime(currentSubtitle.start) < playedSeconds &&
       parseTime(currentSubtitle.end) >= playedSeconds
     ) {
-      // current sbutilte has not changed
+      // current subtitle has not changed
     } else {
-      const newSubtitle = subtitles.find(
+      const newSubtitleIndex = subtitles.findIndex(
         (subtitle) =>
           parseTime(subtitle.start) < playedSeconds &&
           parseTime(subtitle.end) >= playedSeconds
       );
-      console.log("newSubtitle", newSubtitle);
-      setCurrentSubtitle(newSubtitle || null);
+
+      if (newSubtitleIndex !== -1) {
+        console.log("New subtitle index:", currentSubtitleIndex);
+        setCurrentSubtitle(subtitles[newSubtitleIndex]);
+        currentSubtitleIndexRef.current = newSubtitleIndex; // Update ref instead of state
+        setCurrentSubtitleIndex(newSubtitleIndex);
+      } else {
+        setCurrentSubtitle(null);
+        currentSubtitleIndexRef.current = -1;
+        setCurrentSubtitleIndex(-1);
+      }
     }
   }, [playedSeconds]);
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    console.log("Key pressed:", pxref.current);
+    if (currentSubtitleIndexRef.current === -1 || !subtitles.length) return;
+    if (isButtonPressedRef.current) return;
+
+    const currentSubtitle = subtitles[currentSubtitleIndexRef.current];
+    console.log("Current subtitle:", currentSubtitle);
+    if (!currentSubtitle) return;
+
+    switch (event.key) {
+      case "ArrowUp":
+        event.preventDefault();
+        setSubtitles((prevSubtitles) =>
+          prevSubtitles.map((subtitle, index) =>
+            index === currentSubtitleIndexRef.current
+              ? { ...subtitle, y: (subtitle.y || 0) - pxref.current }
+              : subtitle
+          )
+        );
+        handleSeek(parseTime(currentSubtitle.start) + 0.5);
+        break;
+      case "ArrowDown":
+        event.preventDefault();
+        setSubtitles((prevSubtitles) =>
+          prevSubtitles.map((subtitle, index) =>
+            index === currentSubtitleIndexRef.current
+              ? { ...subtitle, y: (subtitle.y || 0) + pxref.current }
+              : subtitle
+          )
+        );
+        handleSeek(parseTime(currentSubtitle.start) + 0.5);
+        break;
+      case "ArrowLeft":
+        event.preventDefault();
+        setSubtitles((prevSubtitles) =>
+          prevSubtitles.map((subtitle, index) =>
+            index === currentSubtitleIndexRef.current
+              ? { ...subtitle, x: (subtitle.x || 0) - pxref.current }
+              : subtitle
+          )
+        );
+        handleSeek(parseTime(currentSubtitle.start) + 0.5);
+        break;
+      case "ArrowRight":
+        event.preventDefault();
+        setSubtitles((prevSubtitles) =>
+          prevSubtitles.map((subtitle, index) =>
+            index === currentSubtitleIndexRef.current
+              ? { ...subtitle, x: (subtitle.x || 0) + pxref.current }
+              : subtitle
+          )
+        );
+        handleSeek(parseTime(currentSubtitle.start) + 0.5);
+        break;
+    }
+  };
+  // Add subtitles to dependencies
 
   const handlebuttonpress = (e: any) => {
     e.preventDefault();
     setIsButtonPressed(!isButtonPressed);
-    if (isButtonPressed) {
-      setbuttontype("default");
-    } else {
+    isButtonPressedRef.current = isButtonPressed;
+    if (!isButtonPressed) {
+      console.log("Button is pressed");
       setbuttontype("destructive");
+      document.addEventListener("keydown", handleKeyDown);
+    } else {
+      console.log("Button is not pressed");
+      setbuttontype("default");
+      document.removeEventListener("keydown", handleKeyDown);
     }
   };
+
   return (
     <div className="w-full h-full max-w-4xl max-h-[80vh] mx-auto p-4 bg-neutral-900 rounded-lg shadow-lg flex flex-col items-center">
       <div className="w-full h-full relative rounded overflow-hidden">
@@ -219,9 +296,20 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       </div>
 
       <div className="flex items-center justify-between  space-x-4 mt-4 w-full px-2">
-        <Button variant={buttontype} onClick={handlebuttonpress}>
-          Move px({px})
-        </Button>
+        <div className="flex flex-row">
+          <Button variant={buttontype} onClick={handlebuttonpress}>
+            Move
+          </Button>
+          <Input
+            value={px}
+            className=" w-14"
+            onChange={(e: any) => {
+              console.log(e.target.value);
+              setpx((prev) => e.target.value);
+              pxref.current = parseInt(e.target.value);
+            }}
+          ></Input>
+        </div>
       </div>
 
       {/* Playback Slider */}
