@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"; // Add useEffect import
 import { FaTimes } from "react-icons/fa"; // Import the cross icon
-import { srtToAST } from "./srtAstParser";
-import { loadAstFile } from "./srtAstParser";
+import { srtToAST } from "./parseToAst";
+import { webVTTToAST, ssaToAst } from "./parseToAst";
+import { loadAstFile } from "./parseToAst";
 import { Subtitle } from "./types";
 import { AiOutlineSplitCells } from "react-icons/ai";
 import { CgArrowsMergeAltV } from "react-icons/cg";
@@ -43,9 +44,17 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         // If .ast file, load AST directly
         const parsedSubtitles = loadAstFile(fileContent);
         setSubtitles(parsedSubtitles);
+      } else if (file.name.endsWith(".vtt")) {
+        // If .vtt file, parse to AST format
+        const parsedSubtitles = webVTTToAST(fileContent);
+        setSubtitles(parsedSubtitles);
+      } else if (file.name.endsWith(".ssa")) {
+        // If .ssa file, parse to AST format
+        const parsedSubtitles = ssaToAst(fileContent);
+        setSubtitles(parsedSubtitles);
       } else {
         console.error(
-          "Unsupported file format. Please upload an .srt or .ast file."
+          "Unsupported file format. Please upload an .srt , .ast, .vtt or .ssa file"
         );
       }
       event.target.value = "";
@@ -241,7 +250,9 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
 
   return (
     <div className="p-4 w-full h-full overflow-auto bg-neutral-800 rounded-lg shadow-lg text-white">
-      <h3 className="mb-4">Subtitle Editor (Supports .srt and .ast files)</h3>
+      <h3 className="mb-4">
+        Subtitle Editor (Supports .srt, .ass , .vtt or .ssa file formats)
+      </h3>
 
       <div>
         <label
@@ -253,7 +264,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         <input
           type="file"
           id="file-upload"
-          accept=".srt,.ast"
+          accept=".srt,.ast,.vtt,.ssa"
           onChange={handleFileUpload}
           className="hidden"
         />
