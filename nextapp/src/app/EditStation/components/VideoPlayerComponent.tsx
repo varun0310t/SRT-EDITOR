@@ -18,7 +18,7 @@ import { set } from "mongoose";
 import { Input } from "@/components/ui/input";
 
 // Import SubtitleOctopus as any type
-const SubtitleOctopus: any = require("@/../JavascriptSubtitlesOctopus/dist/js/subtitles-octopus");
+const SubtitleOctopus: any = require("./subtitles-octopus");
 
 interface VideoPlayerProps {
   file: File;

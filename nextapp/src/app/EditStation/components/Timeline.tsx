@@ -256,7 +256,7 @@ const Timeline: React.FC<TimelineProps> = ({
             {/* Subtitle track */}
             <div
               ref={timelineRef}
-              className="relative h-16 mt-2"
+              className="relative h-16 mt-2 flex items-center "
               onClick={handleClick}
             >
               {/* Subtitle blocks */}
@@ -268,7 +268,7 @@ const Timeline: React.FC<TimelineProps> = ({
                 return (
                   <div
                     key={index}
-                    className="absolute h-8 bg-blue-500 bg-opacity-50 rounded group"
+                    className="absolute h-4/5 bg-blue-500 bg-opacity-50 rounded group flex items-center justify-center cursor-move"
                     style={{
                       left: `${startTime * SCALE}px`,
                       width: `${width}px`,
@@ -283,7 +283,7 @@ const Timeline: React.FC<TimelineProps> = ({
                       className="absolute right-0 w-2 h-full cursor-e-resize opacity-0 group-hover:opacity-100 bg-white bg-opacity-50"
                       onMouseDown={(e) => handleMouseDown(e, index, "end")}
                     />
-                    <span className="text-xs truncate px-1">
+                    <span className="text-xs w-full truncate px-1 text-nowrap text-ellipsis text-center">
                       {subtitle.text}
                     </span>
                   </div>
