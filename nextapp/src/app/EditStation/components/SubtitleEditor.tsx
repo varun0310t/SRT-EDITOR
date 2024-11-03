@@ -31,6 +31,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    console.log("Uploading file...");
     const file = event.target.files?.[0];
     if (file) {
       const fileContent = await file.text();
@@ -47,6 +48,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           "Unsupported file format. Please upload an .srt or .ast file."
         );
       }
+      event.target.value = "";
     }
   };
 
@@ -246,7 +248,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           htmlFor="file-upload"
           className="cursor-pointer p-2 bg-blue-600 rounded"
         >
-          Upload SRT or AST File
+          Upload any Transcirption file (subtitle file)
         </label>
         <input
           type="file"
