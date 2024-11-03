@@ -143,7 +143,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
         mergedSubtitle,
         ...prevSubtitles.slice(index + 2),
       ];
-      
+
       return newSubtitles;
     });
   };
@@ -221,13 +221,13 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
 
   // Add this useEffect to monitor subtitle changes
   useEffect(() => {
-    console.log('Subtitles updated:', subtitles);
+    console.log("Subtitles updated:", subtitles);
   }, [subtitles]);
 
   // Add more detailed logging
   useEffect(() => {
     if (subtitles.length > 0) {
-      console.log('Current subtitles:', JSON.stringify(subtitles, null, 2));
+      console.log("Current subtitles:", JSON.stringify(subtitles, null, 2));
     }
   }, [subtitles]);
 
@@ -263,7 +263,7 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
           {subtitles.map((subtitle, index) => (
             <div
               key={subtitle.id || index} // Use subtitle.id as the key
-              className="relative flex items-start space-x-2 mb-2 group"
+              className="relative flex items-start space-x-2 mb-2 group transition-transform"
             >
               <div className="flex flex-col w-20 h-full justify-center">
                 <input
@@ -301,20 +301,15 @@ const SubtitleEditor: React.FC<SubtitleEditorProps> = ({
               />
               <FaTimes
                 onClick={() => removeSubtitle(index)}
-                className="absolute w-6 h-6 top-[-3px] right-[-10px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
+                className="absolute w-6 h-6 top-[-3px] right-[-10px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 transition-all duration-200 ease-in-out  group-hover:opacity-100"
               />
               <AiOutlineSplitCells
-                onClick={() => {
-                  splitSubtitle(index);
-                }}
-                className="absolute w-7 h-7 bottom-[-25px] right-[20px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
+                onClick={() => splitSubtitle(index)}
+                className="absolute w-7 h-7 bottom-[-25px] right-[20px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 transition-all duration-200 ease-in-out  group-hover:opacity-100"
               />
               <CgArrowsMergeAltV
-                onClick={() => {
-                  console.log("merge");
-                  mergeSubtitle(index);
-                }}
-                className="absolute w-7 h-7 bottom-[-25px] right-[50px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100"
+                onClick={() => mergeSubtitle(index)}
+                className="absolute w-7 h-7 bottom-[-25px] right-[50px] transform -translate-y-1/2 p-1 text-gray-300 cursor-pointer opacity-0 transition-all duration-200 ease-in-out  group-hover:opacity-100"
               />
             </div>
           ))}
